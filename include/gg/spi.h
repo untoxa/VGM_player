@@ -19,7 +19,7 @@ inline void init_spi (void) {
 }
 
 inline void on_disk_init (void) {
-    SPI_SPEED_ON;
+    SPI_SPEED_OFF;
 }
 
 uint8_t xmit_spi(int8_t spi_data) PRESERVES_REGS(b, c, d, e, iyh, iyl);

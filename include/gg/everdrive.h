@@ -21,25 +21,25 @@ static volatile uint8_t AT(0x7f01) STATE_PORT;
 static volatile uint8_t AT(0x7f02) FIFO_PORT;
 static uint8_t AT(0x7f03) FIRM_VERSION;
 
-#define _BCFG_ROM_BANK 1
-#define _BCFG_RAM_BANK 2
-#define _BCFG_RAM_NROM 3
+#define _BCFG_ROM_BANK      1
+#define _BCFG_RAM_BANK      2
+#define _BCFG_RAM_NROM      3
 
 //cfg bits
-#define _CFG_ROM_REGS_ON 0
-#define _CFG_SPI_SS 1
+#define _CFG_ROM_REGS_ON    0
+#define _CFG_SPI_SS         1
 #define _CFG_SPI_FULL_SPEED 2
-#define _CFG_CDM_MAP 3
-#define _CFG_AUTO_BUSY 4
-#define _CFG_ROM_WE_OFF 5
-#define _CFG_SMS_MODE 6
+#define _CFG_CDM_MAP        3
+#define _CFG_AUTO_BUSY      4
+#define _CFG_ROM_WE_OFF     5
+#define _CFG_SMS_MODE       6
 
 //state bits
-#define _ST_SPI_BUSY 7
-#define _ST_ROM_BUSY 6
-#define _ST_FIFO_RD_BUSY 5
-#define _ST_FIFO_WR_BUSY 4
-#define _ST_DEV_GG 3
+#define _ST_SPI_BUSY        7
+#define _ST_ROM_BUSY        6
+#define _ST_FIFO_RD_BUSY    5
+#define _ST_FIFO_WR_BUSY    4
+#define _ST_DEV_GG          3
 
 #define IS_GG_CART (STATE_PORT & (1 << _ST_DEV_GG ))
 
