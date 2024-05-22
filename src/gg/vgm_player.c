@@ -10,7 +10,7 @@
 #define PLAY_BUFFER_SIZE 32
 
 uint8_t play_buffer[PLAY_BUFFER_SIZE];
-uint8_t * play_ptr, *play_load;
+uint8_t *play_load;
 
 #define LOAD_BUFFER_SIZE 64
 
@@ -80,7 +80,7 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
             case 0x62:
             case 0x63:
                 vsync();
-                for (play_ptr = play_buffer; play_ptr != play_load; PSG = *play_ptr++);
+                for (uint8_t * play_ptr = play_buffer; play_ptr != play_load; PSG = *play_ptr++);
                 play_load = play_buffer;
                 PROCESS_INPUT();
                 if (KEY_PRESSED(J_B)) {
