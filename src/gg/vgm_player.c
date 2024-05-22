@@ -14,7 +14,7 @@ uint8_t * play_ptr, *play_load;
 
 #define LOAD_BUFFER_SIZE 64
 
-uint8_t load_buffer[PLAY_BUFFER_SIZE];
+uint8_t load_buffer[LOAD_BUFFER_SIZE];
 uint8_t * load_ptr;
 uint16_t bytes_loaded;
 

@@ -12,11 +12,11 @@
 #define PLAY_BUFFER_SIZE 128
 
 uint8_t play_buffer[PLAY_BUFFER_SIZE];
-uint8_t * play_ptr, *play_load;
+uint8_t *play_load;
 
-#define LOAD_BUFFER_SIZE 128
+#define LOAD_BUFFER_SIZE 64
 
-uint8_t load_buffer[PLAY_BUFFER_SIZE];
+uint8_t load_buffer[LOAD_BUFFER_SIZE];
 uint8_t * load_ptr;
 uint16_t bytes_loaded;
 
@@ -36,6 +36,37 @@ inline uint8_t read_byte(void) {
 inline void vgm_play_cut(void) {
     NR52_REG = 0;
 }
+
+#if 0
+static void vgm_play_buffer(uint8_t count) {
+    uint8_t addr;
+    uint16_t *ptr = play_buffer;
+
+    for (; count; count -= 2) {
+        addr = *ptr++;
+        *((volatile uint8_t*) (0xFF00 | addr)) = *ptr++;
+    }
+}
+#else
+static void vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
+    count;
+    __asm
+    srl a
+    jr z, 2$
+    ld b, a
+    ld hl, #_play_buffer
+1$:
+    ld a, (hl+)
+    ld c, a
+    ld a, (hl+)
+    ldh (c), a
+    dec b
+    jr nz, 1$
+2$:
+    ret
+    __endasm;
+}
+#endif
 
 VGM_RESULT vgm_play_file(const uint8_t * name) {
     static uint32_t temp[3];
@@ -87,11 +118,7 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
             case 0x62:
             case 0x63:
                 vsync();
-                play_ptr = play_buffer;
-                while (play_ptr != play_load) {
-                    addr = *play_ptr++;
-                    *((volatile uint8_t*) (0xFF00 | addr)) = *play_ptr++;
-                }
+                vgm_play_buffer(play_load - play_buffer);
                 play_load = play_buffer;
                 PROCESS_INPUT();
                 if (KEY_PRESSED(J_B)) {
