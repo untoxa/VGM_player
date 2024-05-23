@@ -14,22 +14,24 @@
 #define rcv_spi() xmit_spi(0xff)     /* usi.S: Send a 0xFF to the MMC and get the received byte */
 
 inline void init_spi (void) {
-    RAM_REGS_ON;
     AUTO_BUSY_OFF;
+    SPI_SPEED_OFF;
 }
 
 inline void on_disk_init (void) {
-    SPI_SPEED_OFF;
+    SPI_SPEED_ON;
 }
 
 uint8_t xmit_spi(int8_t spi_data) PRESERVES_REGS(b, c, d, e, iyh, iyl);
 
 inline void disk_access_start (void) {
+    RAM_REGS_ON;
     ROM_REGS_ON;
 }
 
 inline void disk_access_finish (void) {
     ROM_REGS_OFF;
+    RAM_REGS_OFF;
 }
 
 #endif  /* _SPI_H_DEFINED */

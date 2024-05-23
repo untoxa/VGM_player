@@ -142,9 +142,11 @@ DSTATUS disk_initialize (void)
     CS_HIGH();
     rcv_spi();
 
+    if (ty) on_disk_init();
+
     disk_access_finish();
 
-    return ty ? on_disk_init(), 0 : STA_NOINIT;
+    return (ty) ? 0 : STA_NOINIT;
 }
 
 

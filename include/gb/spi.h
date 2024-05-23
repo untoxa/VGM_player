@@ -18,9 +18,7 @@ inline void init_spi (void) {
 }
 
 inline void on_disk_init (void) {
-    EDX_REGS_ON;
     EDX_REG_SPI_CTRL &= ~(1 << EDX_REG_SPI_LOW_SPEED);
-    EDX_REGS_OFF;
 }
 
 uint8_t xmit_spi(int8_t spi_data) PRESERVES_REGS(b, c, d, e);
