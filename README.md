@@ -3,7 +3,8 @@
 Simple VGM player for:
 
 * the Sega Game Gear with an old Everdrive SD cart,
-* the Game Boy with an Everdrive X3/X5/X7 SD cart.
+* the Game Boy with an Everdrive X3/X5/X7 SD cart,
+* the Game Boy with an EZ-Flash Junior SD cart.
 
 Plays non-compressed VGM files directly from the SD card.
 
