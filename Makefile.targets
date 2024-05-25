@@ -28,3 +28,8 @@ gg-everdrive-clean:
 gg-everdrive:
 	${MAKE} build-target PORT=z80 PLAT=gg CARD=everdrive EXT=gg
 
+sms-everdrive-clean:
+	${MAKE} clean-target CARD=everdrive EXT=sms
+sms-everdrive:
+	${MAKE} build-target PORT=z80 PLAT=sms CARD=everdrive EXT=sms
+
