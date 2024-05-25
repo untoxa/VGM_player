@@ -23,7 +23,7 @@ jobs:
       - name: Check out VGM Player repo
         uses: actions/checkout@v4
         with:
-          path: VGM_Player/VGM_Player
+          path: VGM_Player
           submodules: false
 
       # ==== OS Specific Dependencies and GBDK package ====
@@ -38,9 +38,7 @@ jobs:
           rm -f gbdk.tar.gz
           python -m pip install --upgrade Pillow
           python -m pip install --upgrade wave
-          cd VGM_Player
           rm -rf .git .gitignore .github
-          cd ..
           cd ..
 
       # ==== Pre-Build: Set environment vars ====
@@ -57,9 +55,9 @@ jobs:
         if: (matrix.name == 'Linux-x64')
         shell: bash
         run: |
-          cd VGM_player/VGM_player/
+          cd VGM_player/
           make
-          cd ../..
+          cd ..
 
       # ==== Packaging ====
       - name: Package build Linux/MacOS
@@ -67,7 +65,7 @@ jobs:
         shell: bash
         run: |
           mkdir package
-          tar czf package/${{ env.BUILD_PACKAGE_FILENAME }} VGM_player/VGM_player/build
+          tar czf package/${{ env.BUILD_PACKAGE_FILENAME }} VGM_player/build
 
       - name: Store build
         if: (matrix.name == 'Linux-x64')
