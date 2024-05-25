@@ -3,8 +3,6 @@
 /* Based on the AVR example (C)ChaN, 2014                                  */
 /*-------------------------------------------------------------------------*/
 
-#if !defined(CARD_ezflashjr)
-
 #include <gbdk/platform.h>
 #include <string.h>
 
@@ -263,6 +261,4 @@ DRESULT disk_writep (
 
     return res;
 }
-#endif
-
 #endif
