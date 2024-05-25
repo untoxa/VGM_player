@@ -191,7 +191,7 @@ uint8_t read_directory(uint8_t * path) {
     }
 #endif
     // calculate the page count
-    browser_max_pages = ((files_loaded % MAX_FILES_ON_PAGE) ? 1 : 0) + files_loaded / MAX_FILES_ON_PAGE;
+    browser_max_pages = ((files_loaded % MAX_FILES_ON_PAGE) ? 1 : 0) + (files_loaded / MAX_FILES_ON_PAGE);
     // return the number of files
     return files_loaded;
 }
