@@ -28,12 +28,18 @@ uint8_t detect_system(void) BANKED {
 }
 
 uint8_t setup_system(void) BANKED {
-#if defined(SEGA)
+#if defined(NINTENDO)
+    if (_is_COLOR) {
+        CPU_FAST();
+        cgb_compatibility();
+    }
+#elif defined(SEGA)
     __WRITE_VDP_REG(VDP_R2, R2_MAP_0x3800); 
     __WRITE_VDP_REG(VDP_R5, R5_SAT_0x3F00);
 #endif
     HIDE_SPRITES; SHOW_BKG;
     DISPLAY_ON;
+    return 0;
 }
 
 uint8_t CPU_FAST(void) BANKED {
