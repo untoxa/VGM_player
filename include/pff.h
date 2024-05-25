@@ -21,6 +21,7 @@
 extern "C" {
 #endif
 
+#include <gbdk/platform.h>
 #include <stdint.h>
 
 #include "pffconf.h"
@@ -101,13 +102,13 @@ typedef enum {
 /*--------------------------------------------------------------*/
 /* Petit FatFs module application interface                     */
 
-FRESULT pf_mount (FATFS* fs);                               /* Mount/Unmount a logical drive */
-FRESULT pf_open (const char* path);                         /* Open a file */
-FRESULT pf_read (void* buff, uint16_t btr, uint16_t* br);           /* Read data from the open file */
-FRESULT pf_write (const void* buff, uint16_t btw, uint16_t* bw);    /* Write data to the open file */
-FRESULT pf_lseek (uint32_t ofs);                                /* Move file pointer of the open file */
-FRESULT pf_opendir (DIR* dj, const char* path);             /* Open a directory */
-FRESULT pf_readdir (DIR* dj, FILINFO* fno);                 /* Read a directory item from the open directory */
+FRESULT pf_mount (FATFS* fs) BANKED;                                     /* Mount/Unmount a logical drive */
+FRESULT pf_open (const char* path) BANKED;                               /* Open a file */
+FRESULT pf_read (void* buff, uint16_t btr, uint16_t* br) BANKED;         /* Read data from the open file */
+FRESULT pf_write (const void* buff, uint16_t btw, uint16_t* bw) BANKED;  /* Write data to the open file */
+FRESULT pf_lseek (uint32_t ofs) BANKED;                                  /* Move file pointer of the open file */
+FRESULT pf_opendir (DIR* dj, const char* path) BANKED;                   /* Open a directory */
+FRESULT pf_readdir (DIR* dj, FILINFO* fno) BANKED;                       /* Read a directory item from the open directory */
 
 
 

@@ -35,6 +35,8 @@
 /                     Removed some code pages actually not valid.
 /----------------------------------------------------------------------------*/
 
+#pragma bank 255
+
 #include "pff.h"        /* Petit FatFs configurations and declarations */
 #include "diskio.h"     /* Declarations of low level disk I/O functions */
 
@@ -818,7 +820,7 @@ static uint8_t check_fs (   /* 0:The FAT boot record, 1:Valid boot record but no
 
 FRESULT pf_mount (
     FATFS *fs       /* Pointer to new file system object */
-)
+) BANKED
 {
     uint8_t fmt, buf[36];
     uint32_t bsect, fsize, tsect, mclst;
@@ -893,7 +895,7 @@ FRESULT pf_mount (
 
 FRESULT pf_open (
     const char *path    /* Pointer to the file name */
-)
+) BANKED
 {
     FRESULT res;
     DIR dj;
@@ -929,7 +931,7 @@ FRESULT pf_read (
     void* buff,     /* Pointer to the read buffer (NULL:Forward data to the stream)*/
     uint16_t btr,       /* Number of bytes to read */
     uint16_t* br        /* Pointer to number of bytes read */
-)
+) BANKED
 {
     DRESULT dr;
     CLUST clst;
@@ -986,7 +988,7 @@ FRESULT pf_write (
     const void* buff,   /* Pointer to the data to be written */
     uint16_t btw,           /* Number of bytes to write (0:Finalize the current write operation) */
     uint16_t* bw            /* Pointer to number of bytes written */
-)
+) BANKED
 {
     CLUST clst;
     uint32_t sect, remain;
@@ -1054,7 +1056,7 @@ FRESULT pf_write (
 
 FRESULT pf_lseek (
     uint32_t ofs        /* File pointer from top of file */
-)
+) BANKED
 {
     CLUST clst;
     uint32_t bcs, sect, ifptr;
@@ -1105,7 +1107,7 @@ FRESULT pf_lseek (
 FRESULT pf_opendir (
     DIR *dj,            /* Pointer to directory object to create */
     const char *path    /* Pointer to the directory path */
-)
+) BANKED
 {
     FRESULT res;
     uint8_t sp[12], dir[32];
@@ -1144,7 +1146,7 @@ FRESULT pf_opendir (
 FRESULT pf_readdir (
     DIR *dj,            /* Pointer to the open directory object */
     FILINFO *fno        /* Pointer to file information to return */
-)
+) BANKED
 {
     FRESULT res;
     uint8_t sp[12], dir[32];
