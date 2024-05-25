@@ -1,5 +1,6 @@
 .vscode
 /obj/*
+/build/*
 *.map
 *.sym
 *.ihx
