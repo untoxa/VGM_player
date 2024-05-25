@@ -39,11 +39,11 @@ jobs:
       # ==== Pre-Build: Set environment vars ====
       # Needs to be in a separate step than build so that setting the environment var takes effect
       #
-      - name: Pre-Build Linux/MacOS
+      - name: Pre-Build Linux
         if: (matrix.name == 'Linux-x64')
         shell: bash
         run: |
-          echo "BUILD_PACKAGE_FILENAME=${{ matrix.name }}.tar.gz" >> $GITHUB_ENV
+          echo "BUILD_PACKAGE_FILENAME=VGM_Player.tar.gz" >> $GITHUB_ENV
 
       # ==== Builds ====
       - name: Build VGM Player Linux
@@ -53,15 +53,16 @@ jobs:
           export GBDK_HOME=`pwd`/gbdk/
           cd VGM_player
           make
-          cd build
-          rm -rf *.noi *.map *.sym *.ihx
-          cd ../..
 
       # ==== Packaging ====
-      - name: Package build Linux/MacOS
+      - name: Package build Linux
         if: (matrix.name == 'Linux-x64')
         shell: bash
         run: |
+          rm -f ./**/*.noi
+          rm -f ./**/*.map
+          rm -f ./**/*.sym
+          rm -f ./**/*.ihx
           mkdir package
           tar czf package/${{ env.BUILD_PACKAGE_FILENAME }} VGM_player/build
 
