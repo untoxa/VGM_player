@@ -13,17 +13,16 @@ LCC = $(subst ',,$(subst \,/,'$(GBDK_HOME)'))/bin/lcc
 PNG2ASSET = $(subst ',,$(subst \,/,'$(GBDK_HOME)'))/bin/png2asset
 
 # Set platforms to build here, spaced separated. (These are in the separate Makefile.targets)
-# They can also be built/cleaned individually: "make gg" and "make gg-clean"
-# Possible are: gb gbc pocket sms gg
-#TARGETS = gb gbc pocket sms gg
-TARGETS = gb-everdrivex gb-ezflashjr gg-everdrive
+# They can also be built/cleaned individually: "make gg-everdrive" and "make gg-everdrive-clean"
+# Possible are: gb-everdrivex gb-ezflashjr gg-everdrive sms-everdrive
+TARGETS = gb-everdrivex gb-ezflashjr gg-everdrive sms-everdrive
 
 # LIBRARIES = -Wl-llib/$(PORT)/hUGEDriver.lib
 
 # Configure platform specific LCC flags here:
-LCCFLAGS_gb      = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)"
+LCCFLAGS_gb      = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wm-yc
 LCCFLAGS_pocket  = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)"
-LCCFLAGS_gbc     = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wm-yc
+LCCFLAGS_gbc     = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wm-yC
 LCCFLAGS_sms     =
 LCCFLAGS_gg      =
 
