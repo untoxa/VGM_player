@@ -53,7 +53,9 @@ jobs:
           export GBDK_HOME=`pwd`/gbdk/
           cd VGM_player
           make
-          cd ..
+          cd build
+          rm -rf *.noi *.map *.sym *.ihx
+          cd ../..
 
       # ==== Packaging ====
       - name: Package build Linux/MacOS
