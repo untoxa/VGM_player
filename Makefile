@@ -16,7 +16,7 @@ PNG2ASSET = $(subst ',,$(subst \,/,'$(GBDK_HOME)'))/bin/png2asset
 # They can also be built/cleaned individually: "make gg" and "make gg-clean"
 # Possible are: gb gbc pocket sms gg
 #TARGETS = gb gbc pocket sms gg
-TARGETS = gb gg
+TARGETS = gb-everdrivex gb-ezflashjr gg-everdrive
 
 # LIBRARIES = -Wl-llib/$(PORT)/hUGEDriver.lib
 
@@ -33,7 +33,8 @@ LCCFLAGS += -Wl-j -Wm-yoA -autobank -Wb-ext=.rel
 # LCCFLAGS += -debug # Uncomment to enable debug output
 # LCCFLAGS += -v     # Uncomment for lcc verbose output
 
-CFLAGS   = -Iinclude -Iinclude/$(PORT) -Iinclude/$(PLAT) -I$(RESDIR) -Iobj/$(PLAT)
+CFLAGS   = -Iinclude -Iinclude/$(PORT) -Iinclude/$(PLAT) -I$(RESDIR) -Iobj/$(PLAT)-$(CARD)
+CFLAGS   += -Iinclude/$(PLAT)/$(CARD) -DCARD_$(CARD)
 CFLAGS   += -Wf'--max-allocs-per-node 50000'
 
 # Git support
@@ -52,13 +53,14 @@ PROJECTNAME = vgm_player
 SRCDIR      = src
 SRCPORT     = src/$(PORT)
 SRCPLAT     = src/$(PLAT)
-OBJDIR      = obj/$(PLAT)
+SRCCARD     = src/$(PLAT)/$(CARD)
+OBJDIR      = obj/$(PLAT)-$(CARD)
 RESDIR      = res
 BINDIR      = build/$(EXT)
 MKDIRS      = $(OBJDIR) $(BINDIR) # See bottom of Makefile for directory auto-creation
 
 # binaries list
-BINS	    = $(OBJDIR)/$(PROJECTNAME).$(EXT)
+BINS	    = $(OBJDIR)/$(PROJECTNAME)-$(CARD).$(EXT)
 
 # resources
 VGM_RES	    = $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/audio/$(PLAT)/sounds/*.vgm)))
@@ -72,8 +74,8 @@ BKG_RES     = $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/gfx/$(PLAT)/bac
 META_RES    = $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/gfx/$(PLAT)/metatiles/*.png)))
 
 # C and ASM sources
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SRCPLAT),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SRCPORT),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/audio/$(PLAT)/*.c))) $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/menus/*.c))) $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/overlays/*.c)))
-ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(SRCPLAT),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(SRCPORT),$(notdir $(wildcard $(dir)/*.s)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SRCPLAT),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SRCCARD),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SRCPORT),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/audio/$(PLAT)/*.c))) $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/menus/*.c))) $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/overlays/*.c)))
+ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(SRCPLAT),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(SRCCARD),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(SRCPORT),$(notdir $(wildcard $(dir)/*.s)))
 
 OBJS        = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 RESOBJ      = $(VGM_RES:%.vgm=$(OBJDIR)/%.o) $(WAV_RES:%.wav=$(OBJDIR)/%.o) $(FX_RES:%.sav=$(OBJDIR)/%.o) $(UGE_RES:%.uge=$(OBJDIR)/%.o) $(FONT_RES:%.png=$(OBJDIR)/%.o) $(SPR_RES:%.png=$(OBJDIR)/%.o) $(BKG_RES:%.png=$(OBJDIR)/%.o) $(META_RES:%.png=$(OBJDIR)/%.o)
@@ -157,6 +159,15 @@ $(OBJDIR)/%.o:	$(SRCPLAT)/%.s
 	$(LCC) $(CFLAGS) -c -o $@ $<
 
 
+# Compile .c files in "src/<platform>/<card>/" to .o object files
+$(OBJDIR)/%.o:	$(SRCCARD)/%.c
+	$(LCC) -Wf-MMD $(CFLAGS) -c -o $@ $<
+
+# Compile .s assembly files in "src/<platform>/<card>/" to .o object files
+$(OBJDIR)/%.o:	$(SRCCARD)/%.s
+	$(LCC) $(CFLAGS) -c -o $@ $<
+
+
 # Compile .c files in "src/<target>/" to .o object files
 $(OBJDIR)/%.o:	$(SRCPORT)/%.c
 	$(LCC) -Wf-MMD $(CFLAGS) -c -o $@ $<
@@ -168,7 +179,7 @@ $(OBJDIR)/%.o:	$(SRCPORT)/%.s
 
 # Link the compiled object files into a .gb ROM file
 $(BINS):	$(RESOBJ) $(OBJS)
-	$(LCC) $(LCCFLAGS) $(CFLAGS) -o $(BINDIR)/$(PROJECTNAME).$(EXT) $^
+	$(LCC) $(LCCFLAGS) $(CFLAGS) -o $(BINDIR)/$(PROJECTNAME)-$(CARD).$(EXT) $^
 
 clean:
 	@echo Cleaning

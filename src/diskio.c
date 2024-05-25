@@ -1,7 +1,9 @@
 /*-------------------------------------------------------------------------*/
-/* PFF - Low level disk control module for the Game Boy   (C)Toxa, 2023    */
+/* PFF - Low level disk control module for SPI interfaces (C)Toxa, 2023    */
 /* Based on the AVR example (C)ChaN, 2014                                  */
 /*-------------------------------------------------------------------------*/
+
+#if !defined(CARD_ezflashjr)
 
 #include <gbdk/platform.h>
 #include <string.h>
@@ -261,4 +263,6 @@ DRESULT disk_writep (
 
     return res;
 }
+#endif
+
 #endif

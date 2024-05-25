@@ -13,30 +13,18 @@ clean-target:
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)
 
-gb-clean:
-	${MAKE} clean-target EXT=gb
-gb:
-	${MAKE} build-target PORT=$(GBCPU) PLAT=gb EXT=gb
+gb-everdrivex-clean:
+	${MAKE} clean-target CARD=everdrivex EXT=gb
+gb-everdrivex:
+	${MAKE} build-target PORT=$(GBCPU) PLAT=gb CARD=everdrivex EXT=gb
 
-gbc-clean:
-	${MAKE} clean-target EXT=gbc
-gbc:
-	${MAKE} build-target PORT=$(GBCPU) PLAT=gb EXT=gbc
+gb-ezflashjr-clean:
+	${MAKE} clean-target CARD=ezflashjr EXT=gb
+gb-ezflashjr:
+	${MAKE} build-target PORT=$(GBCPU) PLAT=gb CARD=ezflashjr EXT=gb
 
-pocket-clean:
-	${MAKE} clean-target EXT=pocket
-pocket:
-	${MAKE} build-target PORT=$(GBCPU) PLAT=ap EXT=pocket
-
-
-sms-clean:
-	${MAKE} clean-target EXT=sms
-sms:
-	${MAKE} build-target PORT=z80 PLAT=sms EXT=sms
-
-
-gg-clean:
-	${MAKE} clean-target EXT=gg
-gg:
-	${MAKE} build-target PORT=z80 PLAT=gg EXT=gg
+gg-everdrive-clean:
+	${MAKE} clean-target CARD=everdrive EXT=gg
+gg-everdrive:
+	${MAKE} build-target PORT=z80 PLAT=gg CARD=everdrive EXT=gg
 
