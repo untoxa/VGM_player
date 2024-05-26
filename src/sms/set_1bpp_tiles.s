@@ -6,14 +6,12 @@
 
         .area   _HOME
 
-; void set_1bpp_data(uint8_t *first_tile, uint16_t nb_tiles, const uint8_t *data) __sdcccall(0) __z88dk_callee __preserves_regs(iyh,iyl);
+; void set_1bpp_data(uint8_t *first_tile, uint16_t nb_tiles, const uint8_t *data) __sdcccall(0) __z88dk_callee;
 _set_1bpp_data::
         DISABLE_VBLANK_COPY     ; switch OFF copy shadow SAT
 
         pop de                  ; pop ret address
-        pop hl
-
-        VDP_WRITE_CMD h, l
+        pop iy
 
         ex de, hl               ; hl = ret
 
@@ -22,72 +20,55 @@ _set_1bpp_data::
 
         inc b
         inc c
-        push ix
 
-        ld ix, (__current_1bpp_colors)
+        ld de, (__current_1bpp_colors)
 
-        push iy
-        ld iy, #-4
-        add iy, sp
-        ld sp, iy
-        push bc
-        jr 2$
+        ld a, e
+        and #0x0f
+        .rept 4
+            sla d
+        .endm
+        or d
+        ld e, a                 ; e = color data
 
-1$:
-        ex (sp), hl
+0$:
+        VDP_WRITE_CMD iyh, iyl
 
+        nop
         ld d, #8
-6$:
-        ld c, (hl)
+1$:
+        ld a, (hl)
         inc hl
-
-        ld e, #8
-5$:
-        srl c
-
-        jr c, 10$
-        ld a, ixh
-        jr 11$
-10$:
-        ld a, ixl
-11$:
-        rra
-        rr 0 (iy)
-        rra
-        rr 1 (iy)
-        rra
-        rr 2 (iy)
-        rra
-        rr 3 (iy)
-
-        dec e
-        jr nz, 5$
-
-        ld a, 0 (iy)
         out (.VDP_DATA), a
-        ld a, 1 (iy)
-        out (.VDP_DATA), a
-        ld a, 2 (iy)
-        out (.VDP_DATA), a
-        ld a, 3 (iy)
-        out (.VDP_DATA), a
-
         dec d
-        jr nz, 6$
+        jr nz, 1$
+
+        ld a, iyh
+        or #0x20
+        ld iyh, a
+        VDP_WRITE_CMD iyh, iyl
+
+        nop
+        ld d, #8
 2$:
-        ex (sp), hl
+        ld a, e
+        out (.VDP_DATA), a
+        dec d
+        jr nz, 2$
 
-        dec l
-        jr  nz, 1$
+        ld a, #8
+        add iyl
+        ld iyl, a
+        adc iyh
+        sub iyl
+        and #~0x20
+        ld iyh, a
 
-        dec h
-        jr  nz, 1$
+        dec c
+        jr  nz, 0$
 
-        ld iy, #6
-        add iy, sp
-        ld sp, iy
-        pop iy
-        pop ix
+        dec b
+        jr  nz, 0$
 
         ENABLE_VBLANK_COPY        ; switch ON copy shadow SAT
 

@@ -12,8 +12,14 @@
 #define TILE_BANK_0 _VRAM8800
 #define TILE_BANK_1 _VRAM8000
 #elif defined(SEGA)
+#if defined(MASTERSYSTEM)
+static uint8_t AT(0x4000) TILE_BANK_0[];
+static uint8_t AT(0x4800) TILE_BANK_1[];
+static uint8_t AT(0x5000) TILE_BANK_2[];
+#elif defined(GAMEGEAR)
 static uint8_t AT(0x4000) TILE_BANK_0[];
 static uint8_t AT(0x6000) TILE_BANK_1[];
+#endif
 #endif
 
 #define TO_TILE_ADDRESS(BASE, NO) ((BASE) + ((NO) << DEVICE_TILE_SIZE_BITS))
@@ -23,7 +29,9 @@ BANKREF_EXTERN(module_screen)
 extern const uint8_t * const screen_tile_addresses[DEVICE_SCREEN_HEIGHT];
 extern const uint8_t screen_tile_map[DEVICE_SCREEN_HEIGHT * DEVICE_SCREEN_WIDTH];
 #if defined(SEGA)
+#if defined(GAMEGEAR)
 extern const uint8_t screen_tile_attr[DEVICE_SCREEN_HEIGHT * DEVICE_SCREEN_WIDTH];
+#endif
 #endif
 
 inline uint8_t screen_clear_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
@@ -34,11 +42,15 @@ inline uint8_t screen_restore_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 #if defined(NINTENDO)
     return (w) ? set_bkg_submap(x, y, w, h, screen_tile_map, DEVICE_SCREEN_WIDTH), w : w;
 #elif defined(SEGA)
+    #if defined(MASTERSYSTEM)
+    return (w) ? set_bkg_submap(x, y, w, h, screen_tile_map, DEVICE_SCREEN_WIDTH), w : w;
+    #elif defined(GAMEGEAR)
     if (w) {
         set_bkg_submap(x, y, w, h, screen_tile_map, DEVICE_SCREEN_WIDTH);
         set_bkg_submap_attributes(x, y, w, h, screen_tile_attr, DEVICE_SCREEN_WIDTH);
     }
     return w;
+    #endif
 #endif
 }
 

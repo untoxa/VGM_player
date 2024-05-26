@@ -33,7 +33,7 @@ void vwf_print_shift_char_left(void * dest, const void * src, uint8_t bank) __sd
 void vwf_memcpy(void* to, const void* from, size_t n, uint8_t bank) __sdcccall(0) __z88dk_callee;
 uint8_t vwf_read_banked_ubyte(const void * src, uint8_t bank) __sdcccall(0) __z88dk_callee;
 void vwf_swap_tiles(void);
-void set_1bpp_data(uint8_t *first_tile, uint16_t nb_tiles, const uint8_t *data) __sdcccall(0) __z88dk_callee __preserves_regs(iyh,iyl);
+void set_1bpp_data(uint8_t *first_tile, uint16_t nb_tiles, const uint8_t *data) __sdcccall(0) __z88dk_callee;
 #endif
 
 void vwf_print_reset(const uint8_t * tile, uint8_t offset) {

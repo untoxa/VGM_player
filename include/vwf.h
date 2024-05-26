@@ -8,7 +8,11 @@
 #if defined(NINTENDO)
 #define DEVICE_TILE_SIZE_BITS 4
 #elif defined(SEGA)
+#if defined(MASTERSYSTEM)
+#define DEVICE_TILE_SIZE_BITS 3
+#elif defined(GAMEGEAR)
 #define DEVICE_TILE_SIZE_BITS 5
+#endif
 #endif
 
 #define __VWF_BANK_PREFIX(A) __bank_##A
