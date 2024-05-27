@@ -23,12 +23,12 @@ _set_1bpp_data::
 
         ld de, (__current_1bpp_colors)
 
-        ld a, e
+        ld a, d
         and #0x0f
         .rept 4
-            sla d
+            sla e
         .endm
-        or d
+        or e
         ld e, a                 ; e = color data
 
         jp 3$

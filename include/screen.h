@@ -34,8 +34,16 @@ extern const uint8_t screen_tile_attr[DEVICE_SCREEN_HEIGHT * DEVICE_SCREEN_WIDTH
 #endif
 #endif
 
+#if defined(MASTERSYSTEM)
+extern const uint8_t color_table[];
+#endif
+
 inline uint8_t screen_clear_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
+#if defined(MASTERSYSTEM)
+    return (w) ? fill_rect(x, y, w, h, SLD_WHITE + color_table[BG_COLOR(color)]), w : w;
+#else
     return (w) ? fill_rect(x, y, w, h, SLD_WHITE + BG_COLOR(color)), w : w;
+#endif
 }
 
 inline uint8_t screen_restore_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {

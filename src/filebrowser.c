@@ -231,14 +231,14 @@ void file_browser_execute(void) BANKED {
         switch (menu_result) {
             case ACTION_EXECUTE_FILE:
 #ifdef SD_READ_EMULATION
-                menu_text_out(1, 17, HELP_CONTEXT_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, VGM_ERRORS[VGM_READ_ERROR]);
+                menu_text_out(1, HELP_CONTEXT_POSITION, HELP_CONTEXT_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, VGM_ERRORS[VGM_READ_ERROR]);
 #else
                 strcpy(text_buffer, current_path);
                 if (strlen(text_buffer)) strcat(text_buffer, "/");
                 strcat(text_buffer, browser_last_selection->caption);
                 if ((play_error = vgm_play_file(text_buffer)) != VGM_OK) {
                     // show error message here
-                    menu_text_out(1, 17, HELP_CONTEXT_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, VGM_ERRORS[play_error]);
+                    menu_text_out(1, HELP_CONTEXT_POSITION, HELP_CONTEXT_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, VGM_ERRORS[play_error]);
                 }
 #endif
                 break;

@@ -6,7 +6,8 @@
 #define MAX_TEXT_BUFFER_SIZE 256
 
 // width of the help context display in tiles
-#define HELP_CONTEXT_WIDTH 17
+#define HELP_CONTEXT_WIDTH (DEVICE_SCREEN_WIDTH - 3)
+#define HELP_CONTEXT_POSITION (DEVICE_SCREEN_HEIGHT - 1)
 
 // enable debug menu item
 #ifndef DEBUG_ENABLED

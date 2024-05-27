@@ -9,8 +9,6 @@
 bool _is_SUPER, _is_COLOR, _is_ADVANCE;
 bool _is_CPU_FAST;
 
-#define __WRITE_VDP_REG_UNSAFE(REG, v) (shadow_##REG=(v),VDP_CMD=(shadow_##REG),VDP_CMD=REG)
-
 uint8_t detect_system(void) BANKED {
 #if defined(NINTENDO)
     // For the SGB + PAL SNES setup this delay is required on startup, otherwise borders don't show up
@@ -58,6 +56,7 @@ uint8_t setup_system(void) BANKED {
     #endif
 #endif
     HIDE_SPRITES; SHOW_BKG;
+    DISABLE_VBL_TRANSFER;
     DISPLAY_ON;
     return 0;
 }
