@@ -43,10 +43,20 @@ uint8_t onFileBrowserMenuItemProps(const struct menu_t * menu, const struct menu
 
 const uint8_t NO_FILES[] = "NO FILES";
 
+#if defined(MASTERSYSTEM)
+#define MAX_FILES_ON_PAGE 48
+#define DISPLAY_COLUMNS   3
+#else
 #define MAX_FILES_ON_PAGE 32
+#define DISPLAY_COLUMNS   2
+#endif
 menu_item_t FileBrowserMenuItems[MAX_FILES_ON_PAGE];
 menu_t FileBrowserMenu = {
-    .x = 0, .y = 1, .width = 20, .height = 16,
+#if defined(MASTERSYSTEM)
+    .x = 1, .y = ((DEVICE_SCREEN_HEIGHT - (MAX_FILES_ON_PAGE / DISPLAY_COLUMNS)) / 2), .width = DEVICE_SCREEN_WIDTH - 1, .height = 16,
+#else
+    .x = 0, .y = 1, .width = DEVICE_SCREEN_WIDTH, .height = 16,
+#endif
     .cancel_mask = J_START, .cancel_result = ACTION_INITIALIZE,
     .flags = MENU_FLAGS_INVERSE,
     .items = FileBrowserMenuItems, .last_item = FileBrowserMenuItems,
@@ -204,14 +214,15 @@ void file_browser_execute(void) BANKED {
 
     memset(FileBrowserMenuItems, 0, sizeof(FileBrowserMenuItems));
 
-    for (uint8_t i = 0; i != MAX_FILES_ON_PAGE; i++, current_item++) {
-        current_item->ofs_x = (i < (MAX_FILES_ON_PAGE / 2)) ? 0 : 10;
-        current_item->ofs_y = (i < (MAX_FILES_ON_PAGE / 2)) ? i : (i - (MAX_FILES_ON_PAGE / 2));
-        current_item->width = 10;
-        current_item->id = i;
-        current_item->onPaint = onFileBrowserMenuItemPaint;
+    for (uint8_t i = 0, k = 0; i != DISPLAY_COLUMNS; i++) {
+        for (uint8_t j = 0; j != (MAX_FILES_ON_PAGE / DISPLAY_COLUMNS); j++, current_item++) {
+            current_item->ofs_x = i * 10;
+            current_item->ofs_y = j;
+            current_item->width = 10;
+            current_item->id = k++;
+            current_item->onPaint = onFileBrowserMenuItemPaint;
+        }
     }
-
     fs_inited = false, current_path[0] = 0;
     read_directory(current_path);
     browser_current_page = 0;

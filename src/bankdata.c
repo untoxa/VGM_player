@@ -108,3 +108,16 @@ void set_banked_data(uint8_t *vram_addr, const uint8_t *data, uint16_t len, uint
 #endif
     SWITCH_ROM(_save);
 }
+
+#if defined(NINTENDO)
+void set_1bpp_data(uint8_t *first_tile, uint8_t nb_tiles, const uint8_t *data);
+#elif defined(SEGA)
+void set_1bpp_data(uint8_t *first_tile, uint16_t nb_tiles, const uint8_t *data) __sdcccall(0) __z88dk_callee;
+#endif
+
+void set_banked_1bit_data(uint8_t *vram_addr, const uint8_t *data, uint16_t nb_tiles, uint8_t bank) NONBANKED {
+    _save = _current_bank;
+    SWITCH_ROM(bank);
+    set_1bpp_data(vram_addr, nb_tiles, data);
+    SWITCH_ROM(_save);
+}

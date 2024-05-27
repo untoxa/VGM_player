@@ -9,6 +9,8 @@
 bool _is_SUPER, _is_COLOR, _is_ADVANCE;
 bool _is_CPU_FAST;
 
+#define __WRITE_VDP_REG_UNSAFE(REG, v) (shadow_##REG=(v),VDP_CMD=(shadow_##REG),VDP_CMD=REG)
+
 uint8_t detect_system(void) BANKED {
 #if defined(NINTENDO)
     // For the SGB + PAL SNES setup this delay is required on startup, otherwise borders don't show up
@@ -40,15 +42,19 @@ uint8_t setup_system(void) BANKED {
 #elif defined(SEGA)
     #if defined(MASTERSYSTEM)
     // set graphics mode 2
-    __WRITE_VDP_REG(VDP_R0, ((__READ_VDP_REG(VDP_R0) & ~0b00000110) | 0b00000010)); // mode 2
-    __WRITE_VDP_REG(VDP_R1, (__READ_VDP_REG(VDP_R1) & ~0b00010000));                // mode 2
-    __WRITE_VDP_REG(VDP_R2, 0x07); // name table from 0x1C00
-    __WRITE_VDP_REG(VDP_R3, 0xff); // color data from 0x2000
-    __WRITE_VDP_REG(VDP_R4, 0x03); // tile tada from 0x0000
-    __WRITE_VDP_REG(VDP_R5, 0x36); // SAT from 1B00
+    CRITICAL {
+        __WRITE_VDP_REG_UNSAFE(VDP_R0, ((__READ_VDP_REG(VDP_R0) & ~0b00000110) | 0b00000010)); // mode 2
+        __WRITE_VDP_REG_UNSAFE(VDP_R1, (__READ_VDP_REG(VDP_R1) & ~0b00010000));                // mode 2
+        __WRITE_VDP_REG_UNSAFE(VDP_R2, 0x07); // name table from 0x1C00
+        __WRITE_VDP_REG_UNSAFE(VDP_R3, 0xff); // color data from 0x2000
+        __WRITE_VDP_REG_UNSAFE(VDP_R4, 0x03); // tile tada from 0x0000
+        __WRITE_VDP_REG_UNSAFE(VDP_R5, 0x36); // SAT from 1B00
+    }
     #elif defined(GAMEGEAR)
-    __WRITE_VDP_REG(VDP_R2, R2_MAP_0x3800);
-    __WRITE_VDP_REG(VDP_R5, R5_SAT_0x3F00);
+    CRITICAL {
+        __WRITE_VDP_REG_UNSAFE(VDP_R2, R2_MAP_0x3800);
+        __WRITE_VDP_REG_UNSAFE(VDP_R5, R5_SAT_0x3F00);
+    }
     #endif
 #endif
     HIDE_SPRITES; SHOW_BKG;

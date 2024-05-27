@@ -31,6 +31,7 @@ _set_1bpp_data::
         or d
         ld e, a                 ; e = color data
 
+        jp 3$
 0$:
         VDP_WRITE_CMD iyh, iyl
 
@@ -63,7 +64,7 @@ _set_1bpp_data::
         sub iyl
         and #~0x20
         ld iyh, a
-
+3$:
         dec c
         jr  nz, 0$
 
