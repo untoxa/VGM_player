@@ -17,6 +17,7 @@
 #include "module_vwf.h"
 #include "screen.h"
 #include "menus.h"
+#include "menu_msgbox.h"
 #include "menu_codes.h"
 
 // #define SD_READ_EMULATION
@@ -24,7 +25,7 @@
 const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong VGM command" };
 VGM_RESULT play_error;
 
-#define MAX_DIR_FILES 100
+#define MAX_DIR_FILES 192
 
 bool fs_inited = false;
 
@@ -64,6 +65,7 @@ menu_t FileBrowserMenu = {
     .onTranslateKey = onTranslateKeyFileBrowser, .onTranslateSubResult = onTranslateSubResultFileBrowser
 };
 uint8_t browser_current_page, browser_max_pages;
+uint8_t browser_menu_result;
 const menu_item_t * browser_last_selection;
 
 void load_browser_page(uint8_t page) {
@@ -84,12 +86,12 @@ uint8_t onTranslateKeyFileBrowser(const struct menu_t * menu, const struct menu_
     if (value & J_LEFT) {
         if (browser_current_page) {
             browser_current_page--;
-            menu_redraw(menu, NULL, browser_last_selection);
+            browser_menu_result = ACTION_PREV_PAGE;
         }
     } else if (value & J_RIGHT) {
         if (browser_current_page < (browser_max_pages - 1)) {
             browser_current_page++;
-            menu_redraw(menu, NULL, browser_last_selection);
+            browser_menu_result = ACTION_NEXT_PAGE;
         }
     }
     return value;
@@ -105,7 +107,6 @@ uint8_t onHelpFileBrowser(const struct menu_t * menu, const struct menu_item_t *
 uint8_t onShowFileBrowser(const menu_t * self, uint8_t * param) {
     self; param;
     screen_clear_rect(self->x, self->y, self->width, self->height, WHITE_ON_BLACK);
-    load_browser_page(browser_current_page);
     strcpy(text_buffer, "[/");
     uint8_t len = strlen(current_path);
     if (len > 25) {
@@ -116,13 +117,14 @@ uint8_t onShowFileBrowser(const menu_t * self, uint8_t * param) {
     }
     strcat(text_buffer, "]");
     menu_text_out(0, 0, DEVICE_SCREEN_WIDTH, WHITE_ON_BLACK, ITEM_TEXT_CENTERED, text_buffer);
+    browser_menu_result = MENU_RESULT_NONE;
     return MENU_PROP_NO_FRAME;
 }
 uint8_t onIdleFileBrowser(const struct menu_t * menu, const struct menu_item_t * selection) {
     menu;
     browser_last_selection = selection;
     vsync();
-    return 0;
+    return browser_menu_result;
 }
 uint8_t * onFileBrowserMenuItemPaint(const struct menu_t * menu, const struct menu_item_t * self) {
     menu; self;
@@ -227,18 +229,19 @@ void file_browser_execute(void) BANKED {
     read_directory(current_path);
     browser_current_page = 0;
     do {
+        load_browser_page(browser_current_page);
+        if (browser_last_selection > FileBrowserMenu.last_item) browser_last_selection = FileBrowserMenu.last_item;
         menu_result = menu_execute(&FileBrowserMenu, NULL, browser_last_selection);
         switch (menu_result) {
             case ACTION_EXECUTE_FILE:
 #ifdef SD_READ_EMULATION
-                menu_text_out(1, HELP_CONTEXT_POSITION, HELP_CONTEXT_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, VGM_ERRORS[VGM_READ_ERROR]);
+                MessageBox(VGM_ERRORS[VGM_READ_ERROR]);
 #else
                 strcpy(text_buffer, current_path);
                 if (strlen(text_buffer)) strcat(text_buffer, "/");
                 strcat(text_buffer, browser_last_selection->caption);
                 if ((play_error = vgm_play_file(text_buffer)) != VGM_OK) {
-                    // show error message here
-                    menu_text_out(1, HELP_CONTEXT_POSITION, HELP_CONTEXT_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, VGM_ERRORS[play_error]);
+                    MessageBox(VGM_ERRORS[play_error]);
                 }
 #endif
                 break;
@@ -254,6 +257,9 @@ void file_browser_execute(void) BANKED {
                 read_directory(current_path);
                 browser_current_page = 0;
                 browser_last_selection = NULL;
+                break;
+            case ACTION_NEXT_PAGE:
+            case ACTION_PREV_PAGE:
                 break;
             case ACTION_INITIALIZE:
                 fs_inited = false, current_path[0] = 0;

@@ -11,6 +11,8 @@
 #define ACTION_EXECUTE_FILE         10
 #define ACTION_EXECUTE_DIRECTORY    11
 #define ACTION_READ_DIRECTORY       12
+#define ACTION_NEXT_PAGE            13
+#define ACTION_PREV_PAGE            14
 
 #define ACTION_INITIALIZE           20
 

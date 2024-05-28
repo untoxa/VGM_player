@@ -91,8 +91,6 @@ _set_tile_submap_compat::
         ld a, #0xE0
         and d
         add e
-        ld hl, #.vdp_shift
-        add (hl)
         ld c, a                 ; dest BC = HL + ((0x20 * Y) * 2) + (X * 2)
 
         ld a, b

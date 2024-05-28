@@ -16,7 +16,7 @@ _set_tile_map::
         ex de, hl       ; HL = WH, DE = data
 
         xor a
-        FAST_MOD8 b #.VDP_MAP_HEIGHT
+        FAST_MOD8 b #24
 
         ld b, d
         ld d, a
