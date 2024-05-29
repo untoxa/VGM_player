@@ -1,10 +1,5 @@
 #include "vwf.h"
 
-#if defined(NINTENDO)
-#define VWF_DEFAULT_BASE_ADDRESS 0x9800
-#elif defined(SEGA)
-#define VWF_DEFAULT_BASE_ADDRESS 0x7800
-#endif
 #define DEVICE_TILE_WIDTH 8u
 #define DEVICE_TILE_SIZE (1 << DEVICE_TILE_SIZE_BITS)
 #define VWF_TILE_SIZE 8u
