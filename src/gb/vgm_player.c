@@ -48,6 +48,7 @@ static void vgm_play_buffer(uint8_t count) {
         addr = *ptr++;
         *((volatile uint8_t*) (0xFF00 | addr)) = *ptr++;
     }
+    play_load = play_buffer;
 }
 #else
 static void vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
@@ -65,6 +66,12 @@ static void vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
     dec b
     jr nz, 1$
 2$:
+    ld hl, #_play_buffer
+    ld a, (hl+)
+    ld b, (hl)
+    ld hl, #_play_load
+    ld (hl+), a
+    ld (hl), b
     ret
     __endasm;
 }
@@ -123,7 +130,6 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
             case 0x63:
                 vsync();
                 vgm_play_buffer(play_load - play_buffer);
-                play_load = play_buffer;
                 PROCESS_INPUT();
                 if (KEY_PRESSED(J_B)) {
                     vgm_play_cut();
@@ -133,8 +139,10 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
                 break;
             default:
                 // skip unsupported waiting commands without breaking
-                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80))
+                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80)) {
+                    vgm_play_buffer(play_load - play_buffer);
                     break;
+                }
                 // break on unsupported commands
                 vgm_play_cut();
                 return VGM_UNSUPORTED_CMD;

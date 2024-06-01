@@ -40,6 +40,11 @@ void vgm_play_cut(void) {
     PSG = PSG_LATCH | PSG_CH3 | PSG_VOLUME | 0x0f;
 }
 
+inline void vgm_play_buffer(void) {
+    for (uint8_t * play_ptr = play_buffer; play_ptr != play_load; PSG = *play_ptr++);
+    play_load = play_buffer;
+}
+
 VGM_RESULT vgm_play_file(const uint8_t * name) {
     static uint32_t temp[4];
     static uint32_t data_offset;
@@ -84,8 +89,7 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
             case 0x62:
             case 0x63:
                 vsync();
-                for (uint8_t * play_ptr = play_buffer; play_ptr != play_load; PSG = *play_ptr++);
-                play_load = play_buffer;
+                vgm_play_buffer();
                 PROCESS_INPUT();
                 if (KEY_PRESSED(J_B)) {
                     vgm_play_cut();
@@ -95,8 +99,11 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
                 break;
             default:
                 // skip unsupported waiting commands without breaking
-                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80))
+                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80)) {
+                    // force playback
+                    vgm_play_buffer();
                     break;
+                }
                 // break on unsupported commands
                 vgm_play_cut();
                 return VGM_UNSUPORTED_CMD;
