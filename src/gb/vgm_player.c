@@ -131,7 +131,7 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
                 vsync();
                 vgm_play_buffer(play_load - play_buffer);
                 PROCESS_INPUT();
-                if (KEY_PRESSED(J_B)) {
+                if (KEY_PRESSED(J_A | J_B)) {
                     vgm_play_cut();
                     waitpadup();
                     return VGM_OK;

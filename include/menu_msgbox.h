@@ -5,5 +5,6 @@
 
 uint8_t ShowMessageBox(const uint8_t * msg) BANKED;
 uint8_t MessageBox(const uint8_t * msg);
+uint8_t DrawMessageBox(const uint8_t * msg);
 
 #endif

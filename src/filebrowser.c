@@ -232,6 +232,8 @@ void file_browser_execute(void) BANKED {
         menu_result = menu_execute(&FileBrowserMenu, NULL, browser_last_selection);
         switch (menu_result) {
             case ACTION_EXECUTE_FILE:
+                sprintf(text_buffer, "Playing: %s", browser_last_selection->caption);
+                DrawMessageBox(text_buffer);
 #ifdef SD_READ_EMULATION
                 MessageBox(VGM_ERRORS[VGM_READ_ERROR]);
 #else

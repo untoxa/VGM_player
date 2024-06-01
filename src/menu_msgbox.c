@@ -61,6 +61,16 @@ uint8_t ShowMessageBox(const uint8_t * msg) BANKED {
     return menu_execute(&MsgBoxMenu, (uint8_t *)msg, NULL);
 }
 
+uint8_t PaintMessageBox(const uint8_t * msg) BANKED {
+    return menu_redraw(&MsgBoxMenu, (uint8_t *)msg, MsgBoxItems);
+}
+
 uint8_t MessageBox(const uint8_t * msg) NONBANKED {
-    return ShowMessageBox(strcpy(text_buffer, msg));
+    if (msg != text_buffer) strcpy(text_buffer, msg);
+    return ShowMessageBox(text_buffer);
+}
+
+uint8_t DrawMessageBox(const uint8_t * msg) NONBANKED {
+    if (msg != text_buffer) strcpy(text_buffer, msg);
+    return PaintMessageBox(text_buffer);
 }
