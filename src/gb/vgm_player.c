@@ -112,12 +112,16 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
                     read_byte();
                 }
                 break;
-            case 0x61:
+            case 0x61: // wait n ticks
                 delay = (uint16_t)read_byte() | (((uint16_t)read_byte()) << 8);
                 for (int16_t i = (delay / TICKS_PER_FRAME); (i); --i) vsync();
-            case 0x62:
-            case 0x63:
+            case 0x62: // wait 1/60th s
+            case 0x63: // wait 1/50th s
                 vsync();
+            case 0x70: case 0x71: case 0x72: case 0x73: // wait 1-16 ticks
+            case 0x74: case 0x75: case 0x76: case 0x77:
+            case 0x78: case 0x79: case 0x7A: case 0x7B:
+            case 0x7C: case 0x7D: case 0x7E: case 0x7F:
                 vgm_play_buffer(play_load - play_buffer);
                 play_load = play_buffer;
                 PROCESS_INPUT();
