@@ -23,7 +23,7 @@ const menu_item_t MsgBoxItems[] = {
 #if defined(MASTERSYSTEM)
         .ofs_x = 8, .ofs_y = 3, .width = 4,
 #else
-        .ofs_x = 5, .ofs_y = 3, .width = 4,
+        .ofs_x = 6, .ofs_y = 3, .width = 4,
 #endif
         .caption = ICON_A " Ok",
         .onPaint = NULL,
@@ -35,7 +35,7 @@ const menu_t MsgBoxMenu = {
 #if defined(MASTERSYSTEM)
     .x = 6, .y = 9, .width = 20, .height = 5,
 #else
-    .x = 3, .y = 6, .width = 14, .height = 5,
+    .x = 2, .y = 6, .width = 16, .height = 5,
 #endif
     .cancel_mask = J_B, .cancel_result = MENU_RESULT_NO,
     .items = MsgBoxItems, .last_item = LAST_ITEM(MsgBoxItems),

@@ -11,6 +11,8 @@
 
 #define PLAY_BUFFER_SIZE 128
 
+uint8_t last_vgm_command;
+
 uint8_t play_buffer[PLAY_BUFFER_SIZE];
 uint8_t *play_load;
 
@@ -74,6 +76,8 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     static uint16_t delay;
     static uint8_t addr;
 
+    last_vgm_command = 0;
+
     // open file
     if (pf_open(name) != FR_OK) return VGM_READ_ERROR;
 
@@ -102,7 +106,7 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     play_load = play_buffer;
     read_init();
     while (true) {
-        switch (read_byte()) {
+        switch (last_vgm_command = read_byte()) {
             case 0xB3: /* write value to register */
                 addr = read_byte();
                 if (addr < 0x30) {
@@ -128,6 +132,10 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
                 }
                 break;
             default:
+                // skip unsupported waiting commands without breaking
+                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80))
+                    break;
+                // break on unsupported commands
                 vgm_play_cut();
                 return VGM_UNSUPORTED_CMD;
             case 0x66:

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "systemdetect.h"
 #include "systemhelpers.h"
@@ -22,7 +23,7 @@
 
 // #define SD_READ_EMULATION
 
-const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong VGM command" };
+const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong command: 0x%hx" };
 VGM_RESULT play_error;
 
 #define MAX_DIR_FILES 192
@@ -129,12 +130,9 @@ uint8_t onIdleFileBrowser(const struct menu_t * menu, const struct menu_item_t *
 uint8_t * onFileBrowserMenuItemPaint(const struct menu_t * menu, const struct menu_item_t * self) {
     menu; self;
     if (self->result == ACTION_EXECUTE_DIRECTORY) {
-        strcpy(text_buffer, " [");
-        strcat(text_buffer, self->caption);
-        strcat(text_buffer, "]");
+        sprintf(text_buffer, " [%s]", self->caption);
     } else {
-        strcpy(text_buffer, " ");
-        strcat(text_buffer + 1, self->caption);
+        sprintf(text_buffer, " %s", self->caption);
     }
     return text_buffer;
 }
@@ -237,11 +235,10 @@ void file_browser_execute(void) BANKED {
 #ifdef SD_READ_EMULATION
                 MessageBox(VGM_ERRORS[VGM_READ_ERROR]);
 #else
-                strcpy(text_buffer, current_path);
-                if (strlen(text_buffer)) strcat(text_buffer, "/");
-                strcat(text_buffer, browser_last_selection->caption);
+                sprintf(text_buffer, "%s/%s", current_path, browser_last_selection->caption);
                 if ((play_error = vgm_play_file(text_buffer)) != VGM_OK) {
-                    MessageBox(VGM_ERRORS[play_error]);
+                    sprintf(text_buffer, VGM_ERRORS[play_error], (uint8_t)last_vgm_command);
+                    MessageBox(text_buffer);
                 }
 #endif
                 break;

@@ -28,6 +28,8 @@ typedef enum {
     N_VGM_RESULTS
 } VGM_RESULT;
 
+extern uint8_t last_vgm_command;
+
 VGM_RESULT vgm_play_file(const uint8_t * name);
 
 #endif
