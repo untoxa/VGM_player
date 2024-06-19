@@ -166,6 +166,7 @@ DRESULT disk_readp (
     uint8_t rc;
 
     if (CachedSector != sector) {
+        CachedSector = 0xffffffff;
 
         disk_access_start();
 
@@ -190,9 +191,9 @@ DRESULT disk_readp (
                 rcv_spi();
                 rcv_spi();
 
+                CachedSector = sector;
                 res = RES_OK;
             }
-            CachedSector = sector;
         }
 
         CS_HIGH();
