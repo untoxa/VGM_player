@@ -48,31 +48,24 @@ static void vgm_play_buffer(uint8_t count) {
         addr = *ptr++;
         *((volatile uint8_t*) (0xFF00 | addr)) = *ptr++;
     }
-    play_load = play_buffer;
 }
 #else
 static void vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
     count;
     __asm
-    srl a
-    jr z, 2$
-    ld b, a
-    ld hl, #_play_buffer
+        srl a
+        ret z
+        ld b, a
+        ld hl, #_play_buffer
 1$:
-    ld a, (hl+)
-    ld c, a
-    ld a, (hl+)
-    ldh (c), a
-    dec b
-    jr nz, 1$
-2$:
-    ld hl, #_play_buffer
-    ld a, (hl+)
-    ld b, (hl)
-    ld hl, #_play_load
-    ld (hl+), a
-    ld (hl), b
-    ret
+        ld a, (hl+)
+        ld c, a
+        ld a, (hl+)
+        ldh (c), a
+        dec b
+        jr nz, 1$
+
+        ret
     __endasm;
 }
 #endif
@@ -110,6 +103,10 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     // jump to data block
     if (pf_lseek(data_offset) != FR_OK) return VGM_READ_ERROR;
 
+    // init sound
+    NR52_REG = 0x80, NR51_REG = 0xFF, NR50_REG = 0x77;
+
+    // play VGM
     play_load = play_buffer;
     read_init();
     while (true) {
@@ -130,6 +127,7 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
             case 0x63:
                 vsync();
                 vgm_play_buffer(play_load - play_buffer);
+                play_load = play_buffer;
                 PROCESS_INPUT();
                 if (KEY_PRESSED(J_A | J_B)) {
                     vgm_play_cut();
@@ -138,9 +136,10 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
                 }
                 break;
             default:
-                // skip unsupported waiting commands without breaking
+                // skip unsupported 0x7x waiting commands without breaking
                 if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80)) {
                     vgm_play_buffer(play_load - play_buffer);
+                    play_load = play_buffer;
                     break;
                 }
                 // break on unsupported commands

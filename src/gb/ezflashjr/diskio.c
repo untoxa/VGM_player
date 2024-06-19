@@ -21,6 +21,8 @@ inline void ezjr_lock(void) {
 }
 
 DSTATUS disk_initialize(void) {
+    CachedSector = 0xffffffff;
+
     ezjr_unlock();
 
     EZJR_REG_31 = 0x00;
