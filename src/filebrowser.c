@@ -23,12 +23,17 @@
 
 // #define SD_READ_EMULATION
 
-const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong command: 0x%hx" };
+const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong command: 0x%hx", "EOF reached" };
 VGM_RESULT play_error;
 
+#if defined(SEGA)
+#define MAX_DIR_FILES 128
+#else
 #define MAX_DIR_FILES 192
+#endif
 
-bool fs_inited = false;
+bool filesystem_inited = false;
+FATFS filesystem;
 
 uint8_t current_path[256] = "";
 FILINFO files_list[MAX_DIR_FILES];
@@ -156,7 +161,6 @@ void cut_path(uint8_t * str) {
 }
 
 uint8_t read_directory(uint8_t * path) {
-    static FATFS fs;
     static DIR dir;
     static FILINFO * fn;
 
@@ -164,8 +168,8 @@ uint8_t read_directory(uint8_t * path) {
 
 #ifndef SD_READ_EMULATION
     // mount FS if not mounted yet
-    if (!fs_inited) {
-        if (fs_inited = (pf_mount(&fs) != FR_OK)) return files_loaded;
+    if (!filesystem_inited) {
+        if (filesystem_inited = (pf_mount(&filesystem) != FR_OK)) return files_loaded;
     }
     // open the current directory
     if (pf_opendir(&dir, path) != FR_OK) return files_loaded;
@@ -223,7 +227,7 @@ void file_browser_execute(void) BANKED {
             current_item->onPaint = onFileBrowserMenuItemPaint;
         }
     }
-    fs_inited = false, current_path[0] = 0;
+    filesystem_inited = false, current_path[0] = 0;
     read_directory(current_path);
     browser_current_page = 0;
     do {
@@ -261,7 +265,7 @@ void file_browser_execute(void) BANKED {
             case ACTION_PREV_PAGE:
                 break;
             case ACTION_INITIALIZE:
-                fs_inited = false, current_path[0] = 0;
+                filesystem_inited = false, current_path[0] = 0;
                 read_directory(current_path);
                 browser_current_page = 0;
                 browser_last_selection = NULL;

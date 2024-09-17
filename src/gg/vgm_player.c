@@ -7,48 +7,120 @@
 #include "pff.h"
 #include "joy.h"
 
-#define PLAY_BUFFER_SIZE 32
+static SFR AT(0xf0) OPLL_REG;
+static SFR AT(0xf1) OPLL_DATA;
+static SFR AT(0xf2) AUDIO_CONTROL;
+
+extern FATFS filesystem;
 
 uint8_t last_vgm_command;
 
-uint8_t play_buffer[PLAY_BUFFER_SIZE];
-uint8_t *play_load;
+uint32_t vgm_data_size, vgm_read_position, vgm_play_position;
 
-#define LOAD_BUFFER_SIZE 64
+#define READ_BUFFER_SIZE 0x800
+#define READ_BUFFER_MASK 0x7ff
 
-uint8_t load_buffer[LOAD_BUFFER_SIZE];
-uint8_t * load_ptr;
-uint16_t bytes_loaded;
-
-inline void read_init(void) {
-    load_ptr = load_buffer; bytes_loaded = 0;
-}
-
-inline uint8_t read_byte(void) {
-    while (true) {
-        if (load_ptr < (load_buffer + bytes_loaded)) {
-            return *load_ptr++;
-        }
-        if (pf_read(load_ptr = load_buffer, sizeof(load_buffer), &bytes_loaded) != FR_OK) return 0x66;
-    }
-}
+uint8_t readahead_buffer[READ_BUFFER_SIZE];
+volatile uint8_t isr_skip;
+volatile uint8_t isr_result;
 
 void vgm_play_cut(void) {
+    // cut PSG
     PSG = PSG_LATCH | PSG_CH0 | PSG_VOLUME | 0x0f;
     PSG = PSG_LATCH | PSG_CH1 | PSG_VOLUME | 0x0f;
     PSG = PSG_LATCH | PSG_CH2 | PSG_VOLUME | 0x0f;
     PSG = PSG_LATCH | PSG_CH3 | PSG_VOLUME | 0x0f;
+    // cut FM
+    for (uint8_t i = 9; i != 0; --i) {
+        OPLL_REG = 0x20 + i;
+        OPLL_DATA = 0;
+        __asm
+            .rept 3
+                push hl
+                pop hl
+            .endm
+        __endasm;
+    }
 }
 
-inline void vgm_play_buffer(void) {
-    for (uint8_t * play_ptr = play_buffer; play_ptr != play_load; PSG = *play_ptr++);
-    play_load = play_buffer;
+void vgm_play_isr(void) {
+    static uint16_t delay;
+    static uint16_t start, stop;
+
+    if (isr_result) return;
+    if (isr_skip) {
+        --isr_skip;
+        return;
+    }
+    if (vgm_play_position >= vgm_data_size) {
+        isr_result = VGM_EOF;
+        return;
+    }
+    start = ((uint16_t)vgm_play_position) & READ_BUFFER_MASK;
+    stop = ((uint16_t)vgm_read_position) & READ_BUFFER_MASK;
+    while (start != stop) {
+        switch (*(readahead_buffer + start)) {
+            case 0x50:
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                PSG = *(readahead_buffer + start);
+                start = ++start & READ_BUFFER_MASK;
+                vgm_play_position += 2;
+                break;
+            case 0x51:
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                OPLL_REG = *(readahead_buffer + start);
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                OPLL_DATA = *(readahead_buffer + start);
+                start = ++start & READ_BUFFER_MASK;
+                vgm_play_position += 3;
+                break;
+            case 0x61:
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                delay = *((uint16_t *)(readahead_buffer + start));
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                isr_skip = delay / 735;
+                vgm_play_position += 3;
+                return;
+            case 0x62:
+            case 0x63:
+                ++vgm_play_position;
+                return;
+            case 0x66:
+                isr_result = VGM_EOF;
+                return;
+            case 0x4f :
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                start = ++start & READ_BUFFER_MASK;
+                vgm_play_position += 2;
+                break;
+            default:
+                if ((*(readahead_buffer + start) > 0x6f) && (*(readahead_buffer + start) < 0x80)) {
+                    start = ++start & READ_BUFFER_MASK;
+                    ++vgm_play_position;
+                    break;
+                }
+                last_vgm_command = *(readahead_buffer + start);
+                isr_result = VGM_UNSUPORTED_CMD;
+                return;
+        }
+    }
 }
+
 
 VGM_RESULT vgm_play_file(const uint8_t * name) {
-    static uint32_t temp[4];
+    static uint32_t temp[5];
     static uint32_t data_offset;
-    static uint16_t delay;
+    static uint16_t bytes_loaded;
+    static uint16_t load;
+    static uint32_t ppos;
+
+    AUDIO_CONTROL = AUDIO_CONTROL | 0x03;
 
     last_vgm_command = 0;
 
@@ -62,8 +134,8 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     // check format TAG
     if (temp[0] != VGM_MAGIC) return VGM_FORMAT_ERROR;
 
-    // check PSG
-    if (temp[3] == 0) return VGM_UNSUPORTED_CHIP;
+    // check PSG || FM
+    if ((temp[3] == 0) && (temp[4] == 0)) return VGM_UNSUPORTED_CHIP;
 
     // locate sound data block offset
     if (temp[2] >= VGM_VERSION_1_50) {
@@ -76,43 +148,54 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     // jump to data block
     if (pf_lseek(data_offset) != FR_OK) return VGM_READ_ERROR;
 
-    play_load = play_buffer;
-    read_init();
+    vgm_data_size = filesystem.fsize - data_offset;
+    vgm_read_position = vgm_play_position = 0;
+    isr_result = VGM_OK;
+    isr_skip = 0;
+
+    disable_interrupts();
+    remove_VBL(vgm_play_isr);
+    add_VBL(vgm_play_isr);
+    enable_interrupts();
+
     while (true) {
-        switch (last_vgm_command = read_byte()) {
-            case 0x50 :
-                *play_load++ = read_byte();
-                break;
-            case 0x61 :
-                delay = (uint16_t)read_byte() | (((uint16_t)read_byte()) << 8);
-                for (uint8_t i = (delay / 735); (i); --i) vsync();
-            case 0x62:
-            case 0x63:
-                vsync();
-                vgm_play_buffer();
-                PROCESS_INPUT();
-                if (KEY_PRESSED(J_A | J_B)) {
-                    vgm_play_cut();
-                    waitpadup();
-                    return VGM_OK;
-                }
-                break;
-            default:
-                // skip unsupported waiting commands without breaking
-                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80)) {
-                    // force playback
-                    vgm_play_buffer();
-                    break;
-                }
-                // break on unsupported commands
-                vgm_play_cut();
-                return VGM_UNSUPORTED_CMD;
-            case 0x4f :
-                read_byte();
-                break;
-            case 0x66 :
-                vgm_play_cut();
-                return VGM_OK;
+        PROCESS_INPUT();
+        if (KEY_PRESSED(J_A | J_B)) {
+            waitpadup();
+            break;
         }
+        if (isr_result) break;
+
+        disable_interrupts();
+        ppos = vgm_play_position;
+        enable_interrupts();
+
+        if (vgm_read_position < vgm_data_size) {
+            if ((vgm_read_position - ppos) < (READ_BUFFER_SIZE >> 2)) {
+                while ((vgm_read_position - ppos) < (READ_BUFFER_SIZE >> 1)) {
+                    load = ((uint16_t)vgm_read_position) & READ_BUFFER_MASK;
+                    if (pf_read(readahead_buffer + load, 64, &bytes_loaded) != FR_OK) {
+                        isr_result = VGM_READ_ERROR;
+                        break;
+                    }
+                    if (!bytes_loaded) break;
+
+                    disable_interrupts();
+                    vgm_read_position += bytes_loaded;
+                    ppos = vgm_play_position;
+                    enable_interrupts();
+
+                    if (vgm_read_position >= vgm_data_size) break;
+                }
+            }
+        }
+        vsync();
     }
+
+    disable_interrupts();
+    remove_VBL(vgm_play_isr);
+    enable_interrupts();
+
+    vgm_play_cut();
+    return (isr_result == VGM_EOF) ? VGM_OK : isr_result;
 }
