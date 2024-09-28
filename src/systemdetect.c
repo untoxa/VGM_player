@@ -56,7 +56,9 @@ uint8_t setup_system(void) BANKED {
     #endif
 #endif
     HIDE_SPRITES; SHOW_BKG;
+    // discable shadow OAM copying in VBlank
     DISABLE_VBL_TRANSFER;
+    // turn on display
     DISPLAY_ON;
     return 0;
 }
