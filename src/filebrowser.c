@@ -23,6 +23,9 @@
 
 // #define SD_READ_EMULATION
 
+#if defined(MASTERSYSTEM)
+const uint8_t * const SYSTEMS[] = {[SYSTEM_60HZ] = "NTSC", [SYSTEM_50HZ] = "PAL"};
+#endif
 const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong command: 0x%hx", "EOF reached" };
 VGM_RESULT play_error;
 
@@ -123,6 +126,11 @@ uint8_t onShowFileBrowser(const menu_t * self, uint8_t * param) {
     }
     strcat(text_buffer, "]");
     menu_text_out(0, 0, DEVICE_SCREEN_WIDTH, WHITE_ON_BLACK, ITEM_TEXT_CENTERED, text_buffer);
+#if defined(MASTERSYSTEM)
+    strcpy(text_buffer, " System: ");
+    strcat(text_buffer, SYSTEMS[get_system()]);
+    menu_text_out(0, DEVICE_SCREEN_HEIGHT - 1, DEVICE_SCREEN_WIDTH, WHITE_ON_BLACK, ITEM_DEFAULT, text_buffer);
+#endif
     browser_menu_result = MENU_RESULT_NONE;
     return MENU_PROP_NO_FRAME;
 }
