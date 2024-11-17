@@ -8,7 +8,7 @@
 #include "diskio.h"
 #include "ezflashjr.h"
 
-uint32_t CachedSector = 0xffffffff;
+uint32_t CachedSector;
 
 inline void ezjr_unlock(void) {
     EZJR_REG_UNLOCK1 = EZJR_UNLOCK1;

@@ -20,7 +20,11 @@ uint8_t *play_load;
 
 uint8_t load_buffer[LOAD_BUFFER_SIZE];
 uint8_t * load_ptr;
+#if LOAD_BUFFER_SIZE > 255
 uint16_t bytes_loaded;
+#else
+uint8_t bytes_loaded;
+#endif
 
 inline void read_init(void) {
     load_ptr = load_buffer; bytes_loaded = 0;

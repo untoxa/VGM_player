@@ -96,7 +96,7 @@ static uint8_t send_cmd (
 /* Initialize Disk Drive                                                 */
 /*-----------------------------------------------------------------------*/
 
-uint32_t CachedSector = 0xffffffff;
+uint32_t CachedSector;
 uint8_t SectorCache[512];
 
 DSTATUS disk_initialize (void)
