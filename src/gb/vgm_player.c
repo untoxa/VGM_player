@@ -22,10 +22,6 @@ uint8_t load_buffer[LOAD_BUFFER_SIZE];
 uint8_t * load_ptr;
 uint16_t bytes_loaded;
 
-inline void read_init(void) {
-    load_ptr = load_buffer; bytes_loaded = 0;
-}
-
 inline uint8_t read_byte(void) {
     while (true) {
         if (load_ptr < (load_buffer + bytes_loaded)) {
@@ -43,7 +39,8 @@ static uint8_t * vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
     count;
     __asm
         srl a
-        ret z
+        jr z, 2$
+
         ld b, a
         ld hl, #_play_buffer
 1$:
@@ -53,7 +50,7 @@ static uint8_t * vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
         ldh (c), a
         dec b
         jr nz, 1$
-
+2$:
         ld bc, #_play_buffer
         ret
     __endasm;
@@ -97,7 +94,8 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
 
     // play VGM
     play_load = play_buffer;
-    read_init();
+    load_ptr = load_buffer;
+    bytes_loaded = 0;
     while (true) {
         switch (last_vgm_command = read_byte()) {
             case 0xB3: /* write value to register */
