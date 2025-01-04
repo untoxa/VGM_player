@@ -22,6 +22,32 @@ uint8_t readahead_buffer[READ_BUFFER_SIZE];
 volatile uint8_t isr_skip;
 volatile uint8_t isr_result;
 
+typedef uint8_t mutex_t;
+
+#define MUTEX_INIT_VALUE 0b11111110
+
+uint8_t mutex_try_lock(mutex_t * mutex) PRESERVES_REGS(b, c) NAKED {
+    mutex;
+__asm
+        ld      h, d
+        ld      l, e
+        xor     a
+        sra     (hl)
+        ccf
+        rla
+        ret
+__endasm;
+}
+void mutex_unlock(mutex_t * mutex) PRESERVES_REGS(b, c) NAKED {
+    mutex;
+__asm
+        ld      h, d
+        ld      l, e
+        res     0, (hl)
+        ret
+__endasm;
+}
+
 inline void vgm_play_cut(void) {
     NR52_REG = 0;
 }
@@ -86,6 +112,15 @@ void vgm_play(void) {
     }
 }
 
+volatile mutex_t mutex;
+
+void timer_isr(void) {
+    if (mutex_try_lock(&mutex)) {
+        vgm_play();
+        mutex_unlock(&mutex);
+    }
+}
+
 VGM_RESULT vgm_play_file(const uint8_t * name) {
     static uint32_t temp[3];
     static uint32_t data_offset;
@@ -129,11 +164,16 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     isr_result = VGM_OK;
     isr_skip = 0;
 
+    // init mutex
+    mutex = MUTEX_INIT_VALUE;
+
+    // init timer interrupt
+    TMA_REG = (_cpu == CGB_TYPE) ? 0x78u : 0xBCu, TAC_REG = 0x04u;
     CRITICAL {
-        remove_VBL(vgm_play);
-        add_VBL(vgm_play);
+        remove_TIM(timer_isr);
+        add_low_priority_TIM(timer_isr);
     }
-    set_interrupts(VBL_IFLAG | LCD_IFLAG);
+    set_interrupts(VBL_IFLAG | LCD_IFLAG | TIM_IFLAG);
 
     while (true) {
         PROCESS_INPUT();
@@ -169,10 +209,10 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
         vsync();
     }
 
-    CRITICAL {
-        remove_VBL(vgm_play);
-    }
     set_interrupts(VBL_IFLAG | LCD_IFLAG);
+    CRITICAL {
+        remove_TIM(timer_isr);
+    }
 
     vgm_play_cut();
     return (isr_result == VGM_EOF) ? VGM_OK : isr_result;
