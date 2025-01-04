@@ -9,58 +9,89 @@
 
 #define TICKS_PER_FRAME 735
 
-#define PLAY_BUFFER_SIZE 256
+extern FATFS filesystem;
 
 uint8_t last_vgm_command;
 
-uint8_t play_buffer[PLAY_BUFFER_SIZE];
-uint8_t *play_load;
+uint32_t vgm_data_size, vgm_read_position, vgm_play_position;
 
-#define LOAD_BUFFER_SIZE 64
+#define READ_BUFFER_SIZE 0x800
+#define READ_BUFFER_MASK 0x7ff
 
-uint8_t load_buffer[LOAD_BUFFER_SIZE];
-uint8_t * load_ptr;
-uint16_t bytes_loaded;
-
-inline uint8_t read_byte(void) {
-    while (true) {
-        if (load_ptr < (load_buffer + bytes_loaded)) {
-            return *load_ptr++;
-        }
-        if (pf_read(load_ptr = load_buffer, sizeof(load_buffer), &bytes_loaded) != FR_OK) return 0x66;
-    }
-}
+uint8_t readahead_buffer[READ_BUFFER_SIZE];
+volatile uint8_t isr_skip;
+volatile uint8_t isr_result;
 
 inline void vgm_play_cut(void) {
     NR52_REG = 0;
 }
 
-static uint8_t * vgm_play_buffer(uint8_t count) PRESERVES_REGS(d, e) NAKED {
-    count;
-    __asm
-        srl a
-        jr z, 2$
+void vgm_play(void) {
+    static uint16_t delay;
+    static uint8_t addr, data;
+    static uint16_t start, stop;
 
-        ld b, a
-        ld hl, #_play_buffer
-1$:
-        ld a, (hl+)
-        ld c, a
-        ld a, (hl+)
-        ldh (c), a
-        dec b
-        jr nz, 1$
-2$:
-        ld bc, #_play_buffer
-        ret
-    __endasm;
+    if (isr_result) return;
+    if (isr_skip) {
+        --isr_skip;
+        return;
+    }
+    if (vgm_play_position >= vgm_data_size) {
+        isr_result = VGM_EOF;
+        return;
+    }
+    start = ((uint16_t)vgm_play_position) & READ_BUFFER_MASK;
+    stop = ((uint16_t)vgm_read_position) & READ_BUFFER_MASK;
+    while (start != stop) {
+        switch (*(readahead_buffer + start)) {
+            case 0xB3: /* write value to register */
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                addr = *(readahead_buffer + start);
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                data = *(readahead_buffer + start);
+                if (addr < 0x30) {
+                    *((uint8_t *)0xff10 + addr) = data;
+                }
+                start = ++start & READ_BUFFER_MASK;
+                vgm_play_position += 3;
+                break;
+            case 0x61:
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                delay = *((uint16_t *)(readahead_buffer + start));
+                start = ++start & READ_BUFFER_MASK;
+                if (start == stop) return;
+                isr_skip = delay / TICKS_PER_FRAME;
+                vgm_play_position += 3;
+                return;
+            case 0x62:
+            case 0x63:
+                ++vgm_play_position;
+                return;
+            case 0x66:
+                isr_result = VGM_EOF;
+                return;
+            default:
+                if ((*(readahead_buffer + start) > 0x6f) && (*(readahead_buffer + start) < 0x80)) {
+                    start = ++start & READ_BUFFER_MASK;
+                    ++vgm_play_position;
+                    break;
+                }
+                last_vgm_command = *(readahead_buffer + start);
+                isr_result = VGM_UNSUPORTED_CMD;
+                return;
+        }
+    }
 }
 
 VGM_RESULT vgm_play_file(const uint8_t * name) {
     static uint32_t temp[3];
     static uint32_t data_offset;
-    static uint16_t delay;
-    static uint8_t addr;
+    static uint16_t bytes_loaded;
+    static uint16_t load;
+    static uint32_t ppos;
 
     last_vgm_command = 0;
 
@@ -93,49 +124,56 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     NR52_REG = 0x80, NR51_REG = 0xFF, NR50_REG = 0x77;
 
     // play VGM
-    play_load = play_buffer;
-    load_ptr = load_buffer;
-    bytes_loaded = 0;
-    while (true) {
-        switch (last_vgm_command = read_byte()) {
-            case 0xB3: /* write value to register */
-                addr = read_byte();
-                if (addr < 0x30) {
-                    *play_load++ = addr + 0x10;
-                    *play_load++ = read_byte();
-                } else {
-                    read_byte();
-                }
-                if ((play_load - play_buffer) > (sizeof(play_buffer) - 4)) {
-                    play_load = vgm_play_buffer(play_load - play_buffer);
-                }
-                break;
-            case 0x61:
-                delay = (uint16_t)read_byte() | (((uint16_t)read_byte()) << 8);
-                for (int16_t i = (delay / TICKS_PER_FRAME); (i); --i) vsync();
-            case 0x62:
-            case 0x63:
-                vsync();
-                play_load = vgm_play_buffer(play_load - play_buffer);
-                PROCESS_INPUT();
-                if (KEY_PRESSED(J_A | J_B)) {
-                    vgm_play_cut();
-                    waitpadup();
-                    return VGM_OK;
-                }
-                break;
-            default:
-                // skip unsupported 0x7x waiting commands without breaking
-                if ((last_vgm_command > 0x6f) && (last_vgm_command < 0x80)) {
-                    play_load = vgm_play_buffer(play_load - play_buffer);
-                    break;
-                }
-                // break on unsupported commands
-                vgm_play_cut();
-                return VGM_UNSUPORTED_CMD;
-            case 0x66:
-                vgm_play_cut();
-                return VGM_OK;
-        }
+    vgm_data_size = filesystem.fsize - data_offset;
+    vgm_read_position = vgm_play_position = 0;
+    isr_result = VGM_OK;
+    isr_skip = 0;
+
+    CRITICAL {
+        remove_VBL(vgm_play);
+        add_VBL(vgm_play);
     }
+    set_interrupts(VBL_IFLAG | LCD_IFLAG);
+
+    while (true) {
+        PROCESS_INPUT();
+        if (KEY_PRESSED(J_A | J_B)) {
+            waitpadup();
+            break;
+        }
+        if (isr_result) break;
+
+        CRITICAL {
+            ppos = vgm_play_position;
+        }
+
+        if (vgm_read_position < vgm_data_size) {
+            if ((vgm_read_position - ppos) < (READ_BUFFER_SIZE >> 2)) {
+                while ((vgm_read_position - ppos) < (READ_BUFFER_SIZE >> 1)) {
+                    load = ((uint16_t)vgm_read_position) & READ_BUFFER_MASK;
+                    if (pf_read(readahead_buffer + load, 64, &bytes_loaded) != FR_OK) {
+                        isr_result = VGM_READ_ERROR;
+                        break;
+                    }
+                    if (!bytes_loaded) break;
+
+                    CRITICAL {
+                        vgm_read_position += bytes_loaded;
+                        ppos = vgm_play_position;
+                    }
+
+                    if (vgm_read_position >= vgm_data_size) break;
+                }
+            }
+        }
+        vsync();
+    }
+
+    CRITICAL {
+        remove_VBL(vgm_play);
+    }
+    set_interrupts(VBL_IFLAG | LCD_IFLAG);
+
+    vgm_play_cut();
+    return (isr_result == VGM_EOF) ? VGM_OK : isr_result;
 }

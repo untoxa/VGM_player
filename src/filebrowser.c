@@ -29,11 +29,7 @@ const uint8_t * const SYSTEMS[] = {[SYSTEM_60HZ] = "NTSC", [SYSTEM_50HZ] = "PAL"
 const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong command: 0x%hx", "EOF reached" };
 VGM_RESULT play_error;
 
-#if defined(SEGA)
 #define MAX_DIR_FILES 128
-#else
-#define MAX_DIR_FILES 192
-#endif
 
 bool filesystem_inited = false;
 FATFS filesystem;

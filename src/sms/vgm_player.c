@@ -7,6 +7,8 @@
 #include "pff.h"
 #include "joy.h"
 
+#define TICKS_PER_FRAME 735
+
 static SFR AT(0xf0) OPLL_REG;
 static SFR AT(0xf1) OPLL_DATA;
 static SFR AT(0xf2) AUDIO_CONTROL;
@@ -83,7 +85,7 @@ void vgm_play(void) {
                 delay = *((uint16_t *)(readahead_buffer + start));
                 start = ++start & READ_BUFFER_MASK;
                 if (start == stop) return;
-                isr_skip = delay / 735;
+                isr_skip = delay / TICKS_PER_FRAME;
                 vgm_play_position += 3;
                 return;
             case 0x62:
