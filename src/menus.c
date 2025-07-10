@@ -70,10 +70,10 @@ void menu_draw_frame(const menu_t * menu) {
     // field
     screen_clear_rect(menu->x, menu->y, menu->width, menu->height, BLACK_ON_WHITE);
     // corners
-    set_bkg_tile_xy(menu->x,                   menu->y,                    CORNER_UL);
-    set_bkg_tile_xy(menu->x + menu->width - 1, menu->y,                    CORNER_UR);
-    set_bkg_tile_xy(menu->x,                   menu->y + menu->height - 1, CORNER_DL);
-    set_bkg_tile_xy(menu->x + menu->width - 1, menu->y + menu->height - 1, CORNER_DR);
+    screen_set_tile_xy(menu->x,                   menu->y,                    CORNER_UL);
+    screen_set_tile_xy(menu->x + menu->width - 1, menu->y,                    CORNER_UR);
+    screen_set_tile_xy(menu->x,                   menu->y + menu->height - 1, CORNER_DL);
+    screen_set_tile_xy(menu->x + menu->width - 1, menu->y + menu->height - 1, CORNER_DR);
 }
 void menu_draw_shadow(const menu_t * menu) {
     // shadow
