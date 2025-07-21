@@ -127,7 +127,7 @@ void vgm_play(void) {
 bool vblank_triggered = false;
 uint8_t interrupt_counter = 0, interrupt_max_counter = NTSC_50HZ_COUNTER, scanline_counter = NTSC_HBLANK_PERIOD, scanline_correction = NTSC_CORRECTION_PERIOD;
 void vblank_isr(void) {
-    __WRITE_VDP_REG(VDP_R10, scanline_correction);
+    __WRITE_VDP_REG_UNSAFE(VDP_R10, scanline_correction);
     vblank_triggered = true;
     if (++interrupt_counter == interrupt_max_counter) {
         vgm_play();
@@ -136,8 +136,7 @@ void vblank_isr(void) {
 }
 void scanline_isr(void) {
     if (vblank_triggered) {
-        __WRITE_VDP_REG(VDP_R10, scanline_counter); // set scanline counter to the target value
-        VCOUNTER = 0xff;                            // retrigger the scanline counter
+        __WRITE_VDP_REG_UNSAFE(VDP_R10, scanline_counter); // set scanline counter to the target value
         vblank_triggered = false;
     } else {
         if (++interrupt_counter == interrupt_max_counter) {
@@ -202,9 +201,8 @@ VGM_RESULT vgm_play_file(const uint8_t * name) {
     }
 
     // set the correct settings for the PAL/NTSC compensation
-    __WRITE_VDP_REG(VDP_R10, 0x00);
-
     disable_interrupts();
+    __WRITE_VDP_REG_UNSAFE(VDP_R10, 0x00);
     remove_VBL(vblank_isr);
     add_VBL(vblank_isr);
     remove_LCD(scanline_isr);
