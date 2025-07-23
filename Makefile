@@ -21,15 +21,15 @@ TARGETS = sms-everdrive gg-everdrive gb-ezflashjr
 # LIBRARIES = -Wl-llib/$(PORT)/hUGEDriver.lib
 
 # Configure platform specific LCC flags here:
-LCCFLAGS_gb      = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wm-yc
-LCCFLAGS_pocket  = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)"
-LCCFLAGS_gbc     = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wm-yC
-LCCFLAGS_sms     =
-LCCFLAGS_gg      =
+LCCFLAGS_gb      = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wl-b_DATA=0xD0A0 -Wm-yc 
+LCCFLAGS_pocket  = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wl-b_DATA=0xD0A0 
+LCCFLAGS_gbc     = $(LIBRARIES) -Wl-yt0x19 -Wm-yn"$(PROJECTNAME)" -Wl-b_DATA=0xD0A0 -Wm-yC
+LCCFLAGS_sms     = -Wl-b_DATA=0xD0C0
+LCCFLAGS_gg      = -Wl-b_DATA=0xD0C0
 
-LCCFLAGS += $(LCCFLAGS_$(EXT)) -Wm-yS # This adds the current platform specific LCC Flags
+LCCFLAGS += $(LCCFLAGS_$(EXT)) -Wl-g_shadow_OAM=0xD000 -Wm-yS # This adds the current platform specific LCC Flags
 
-LCCFLAGS += -Wl-j -Wm-yoA -autobank -Wb-ext=.rel
+LCCFLAGS += -Wl-j -Wl-w -Wm-yoA -autobank -Wb-ext=.rel
 # LCCFLAGS += -debug # Uncomment to enable debug output
 # LCCFLAGS += -v     # Uncomment for lcc verbose output
 

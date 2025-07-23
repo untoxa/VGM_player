@@ -29,13 +29,13 @@ const uint8_t * const SYSTEMS[] = {[SYSTEM_60HZ] = "NTSC", [SYSTEM_50HZ] = "PAL"
 const uint8_t * const VGM_ERRORS[N_VGM_RESULTS] = {"Ok!", "Read error", "VGM format error", "Unsupported chip", "Version error", "Wrong command: 0x%hx", "EOF reached" };
 VGM_RESULT play_error;
 
-#define MAX_DIR_FILES 128
+#define MAX_DIR_FILES (4096 / sizeof(FILINFO))
 
 bool filesystem_inited = false;
 FATFS filesystem;
 
 uint8_t current_path[256] = "";
-FILINFO files_list[MAX_DIR_FILES];
+extern FILINFO files_list[MAX_DIR_FILES];
 FILINFO * files[MAX_DIR_FILES];
 uint8_t files_loaded;
 
@@ -251,6 +251,7 @@ void file_browser_execute(void) BANKED {
                     MessageBox(text_buffer);
                 }
 #endif
+                read_directory(current_path);
                 break;
             case ACTION_EXECUTE_DIRECTORY:
                 if (!strcmp(browser_last_selection->caption, "..")) {

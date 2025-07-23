@@ -18,7 +18,7 @@ uint32_t vgm_data_size, vgm_read_position, vgm_play_position;
 #define READ_BUFFER_SIZE 0x800
 #define READ_BUFFER_MASK 0x7ff
 
-uint8_t readahead_buffer[READ_BUFFER_SIZE];
+extern uint8_t readahead_buffer[READ_BUFFER_SIZE];
 volatile uint8_t isr_skip;
 volatile uint8_t isr_result;
 
