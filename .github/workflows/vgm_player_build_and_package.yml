@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             name: Linux-x64
     steps:
 
