@@ -34,7 +34,6 @@ jobs:
           curl -Lo gbdk.tar.gz https://github.com/gbdk-2020/gbdk-2020/releases/download/4.3.0/gbdk-linux64.tar.gz
           tar xvfz gbdk.tar.gz
           python -m pip install --upgrade Pillow
-          python -m pip install --upgrade wave
 
       # ==== Pre-Build: Set environment vars ====
       # Needs to be in a separate step than build so that setting the environment var takes effect
