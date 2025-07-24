@@ -19,8 +19,10 @@ uint8_t last_vgm_command;
 
 uint32_t vgm_data_size, vgm_read_position, vgm_play_position;
 
-#define READ_BUFFER_SIZE 0x800
-#define READ_BUFFER_MASK 0x7ff
+#define READ_BUFFER_SIZE    0x800
+#define READ_BUFFER_MASK    0x7ff
+#define READ_BUFFER_ADDR    0xc000
+#define WRAP_ADDRESS_MASK   (READ_BUFFER_ADDR | READ_BUFFER_MASK)
 
 extern uint8_t readahead_buffer[READ_BUFFER_SIZE];
 volatile uint8_t isr_skip;
@@ -46,8 +48,8 @@ void vgm_play_cut(void) {
 }
 
 void vgm_play(void) {
-    static uint16_t delay;
-    static uint16_t start, stop;
+    static uint16_t stop;
+    uint16_t start;
 
     if (isr_result) return;
     if (isr_skip) {
@@ -58,36 +60,39 @@ void vgm_play(void) {
         isr_result = VGM_EOF;
         return;
     }
-    start = ((uint16_t)vgm_play_position) & READ_BUFFER_MASK;
-    stop = ((uint16_t)vgm_read_position) & READ_BUFFER_MASK;
+
+    start = (((uint16_t)vgm_play_position) & READ_BUFFER_MASK) | (uint16_t)readahead_buffer;
+    stop = (((uint16_t)vgm_read_position) & READ_BUFFER_MASK) | (uint16_t)readahead_buffer;
+
     while (start != stop) {
-        switch (*(readahead_buffer + start)) {
+        switch (*(uint8_t *)start) {
             case 0x50:
-                start = ++start & READ_BUFFER_MASK;
+                start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
-                PSG = *(readahead_buffer + start);
-                start = ++start & READ_BUFFER_MASK;
+                PSG = *(uint8_t *)start;
+                start = ++start & WRAP_ADDRESS_MASK;
                 vgm_play_position += 2;
                 break;
             case 0x51:
-                start = ++start & READ_BUFFER_MASK;
+                start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
-                OPLL_REG = *(readahead_buffer + start);
-                start = ++start & READ_BUFFER_MASK;
+                OPLL_REG = *(uint8_t *)start;
+                start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
-                OPLL_DATA = *(readahead_buffer + start);
-                start = ++start & READ_BUFFER_MASK;
+                OPLL_DATA = *(uint8_t *)start;
+                start = ++start & WRAP_ADDRESS_MASK;
                 vgm_play_position += 3;
                 break;
-            case 0x61:
-                start = ++start & READ_BUFFER_MASK;
+            case 0x61: {
+                start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
-                delay = *((uint16_t *)(readahead_buffer + start));
-                start = ++start & READ_BUFFER_MASK;
+                uint8_t l = *(uint8_t *)(start);
+                start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
-                isr_skip = delay / TICKS_PER_FRAME;
+                isr_skip = (((uint16_t)(*(uint8_t *)(start)) << 8) | l) / TICKS_PER_FRAME;
                 vgm_play_position += 3;
                 return;
+            }
             case 0x62:
             case 0x63:
                 ++vgm_play_position;
@@ -96,18 +101,18 @@ void vgm_play(void) {
                 isr_result = VGM_EOF;
                 return;
             case 0x4f :
-                start = ++start & READ_BUFFER_MASK;
+                start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
-                start = ++start & READ_BUFFER_MASK;
+                start = ++start & WRAP_ADDRESS_MASK;
                 vgm_play_position += 2;
                 break;
             default:
-                if ((*(readahead_buffer + start) > 0x6f) && (*(readahead_buffer + start) < 0x80)) {
-                    start = ++start & READ_BUFFER_MASK;
+                if ((*(uint8_t *)start > 0x6f) && (*(uint8_t *)start < 0x80)) {
+                    start = ++start & WRAP_ADDRESS_MASK;
                     ++vgm_play_position;
                     break;
                 }
-                last_vgm_command = *(readahead_buffer + start);
+                last_vgm_command = *(uint8_t *)start;
                 isr_result = VGM_UNSUPORTED_CMD;
                 return;
         }
