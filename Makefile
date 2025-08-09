@@ -16,7 +16,7 @@ PNG2ASSET = $(subst ',,$(subst \,/,'$(GBDK_HOME)'))/bin/png2asset
 # They can also be built/cleaned individually: "make gg-everdrive" and "make gg-everdrive-clean"
 # Possible are: gb-everdrivex gb-ezflashjr gg-everdrive sms-everdrive
 #TARGETS = gb-everdrivex gb-ezflashjr gg-everdrive sms-everdrive
-TARGETS = sms-everdrive gg-everdrive gb-ezflashjr
+TARGETS = sms-everdrive gg-everdrive gb-ezflashjr gb-everdrivex
 
 # LIBRARIES = -Wl-llib/$(PORT)/hUGEDriver.lib
 
