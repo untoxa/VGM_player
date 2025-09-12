@@ -7,35 +7,26 @@
 
         .area   _DATA
 
-.image_tile_width_compat::
+.image_tile_width::
         .ds     0x01
-
-        .area   _INITIALIZED
-
-__submap_tile_offset::
-        .ds     0x01
-
-        .area   _INITIALIZER
-
-        .db     0x00
 
         .area   _HOME
 
         .VDP_TILEMAP = 0x5C00
 
-; void set_tile_submap_compat(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t map_w, const uint8_t *map) __z88dk_callee __preserves_regs(iyh, iyl);
-_set_tile_submap_compat::
-        pop hl                  ; HL = ret
+; void set_tile_submap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t map_w, const uint8_t *map) __z88dk_callee;
+_set_tile_submap::
+        pop iy                  ; IY = ret
         pop bc                  ; BC = YX
-        pop de                  ; DE = WH
+        pop hl                  ; HL = HW
+        pop de                  ; DE = data
 
         dec sp
         pop af
-        sub e
-        ld (.image_tile_width_compat), a ; .image_tile_width_compat contains corrected width
+        sub l
+        ld (.image_tile_width), a ; .image_tile_width contains corrected width
 
-        ex (sp), hl             ; HL = data
-        ex de, hl               ; HL = WH, DE = data
+        push iy
 
         push hl
         push de
@@ -70,12 +61,12 @@ _set_tile_submap_compat::
         ld e, a                 ; BC = data, DE = YX
 
         ;; Set background tile table from (BC) at XY = DE of size WH = HL
-.set_tile_submap_xy_compat::
+.set_tile_submap_xy::
         push hl
         ld hl, #.VDP_TILEMAP
 
         ;; Set background tile from (BC) at YX = DE, size WH on stack, to VRAM from address (HL)
-.set_tile_submap_xy_tt_compat::
+.set_tile_submap_xy_tt::
         ld a, h
         ld iyh, a
         push bc                 ; Store source
@@ -149,7 +140,7 @@ _set_tile_submap_compat::
 
         push de
 
-        ld a, (.image_tile_width_compat)
+        ld a, (.image_tile_width)
         ADD_A_REG16 h, l
 
         ld bc, #0x40
