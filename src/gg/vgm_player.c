@@ -45,6 +45,8 @@ void vgm_play_cut(void) {
             .endm
         __endasm;
     }
+    //reset panning
+    GG_SOUND_PAN = 0xFF;
 }
 
 void vgm_play(void) {
