@@ -45,6 +45,8 @@ void vgm_play_cut(void) {
             .endm
         __endasm;
     }
+    //reset panning
+    GG_SOUND_PAN = 0xFF;
 }
 
 void vgm_play(void) {
@@ -103,6 +105,7 @@ void vgm_play(void) {
             case 0x4f :
                 start = ++start & WRAP_ADDRESS_MASK;
                 if (start == stop) return;
+                GG_SOUND_PAN = *(uint8_t *)start;
                 start = ++start & WRAP_ADDRESS_MASK;
                 vgm_play_position += 2;
                 break;
